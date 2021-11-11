@@ -436,6 +436,21 @@ static int obs_init_video(struct obs_video_info *ovi)
 
 	video->thread_initialized = true;
 	video->ovi = *ovi;
+
+	obs_data_t *private_data = obs_get_private_data();
+	bool vcamEnabled = obs_data_get_bool(private_data, "vcamEnabled");
+	obs_data_release(private_data);
+	if (vcamEnabled) {
+		uint64_t interval = ovi->fps_den * 10000000ULL / ovi->fps_num;
+		char res[64];
+		snprintf(res, sizeof(res), "%dx%dx%lld", (int)ovi->output_width,
+			 (int)ovi->output_height, (long long)interval);
+		char *res_file = os_get_config_path_ptr("obs-virtualcam.txt");
+		os_quick_write_utf8_file_safe(res_file, res, strlen(res), false,
+					      "tmp", NULL);
+		bfree(res_file);
+	}
+
 	return OBS_VIDEO_SUCCESS;
 }
 
